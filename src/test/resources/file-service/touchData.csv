@@ -1,0 +1,3 @@
+ID, DateTimeUTC, TouchType, StopID, CompanyID, BusID, PAN
+1,28-02-2024 10:10:10, ON, StopA, Company1, Bus10, 1234556789
+1,28-02-2024 10:20:10, OFF, StopA, Company1, Bus10, 1234556789

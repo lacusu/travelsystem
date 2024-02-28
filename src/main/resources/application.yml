@@ -1,0 +1,22 @@
+#app:
+#  config:
+#    data-file:
+#      touch-data-file:
+#        headers:
+#          - ID
+#          - DateTimeUTC
+#          - TouchType
+#          - StopID
+#          - CompanyID
+#          - BusID
+#          - PAN
+spring:
+  profiles:
+    active: ${SPRING_PROFILE_ACTIVE:local}
+  datasource:
+    driver.class: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:db}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:sa}
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml

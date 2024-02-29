@@ -20,3 +20,6 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:sa}
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
+  h2.console:
+    enabled: true
+    path: /console/

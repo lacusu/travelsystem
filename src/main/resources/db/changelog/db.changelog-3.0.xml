@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="Huy Vo" id="changelog-3.0">
+        <createTable tableName="touch_off">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="datetime" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stop_id" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="company_id" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bus_id" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pan" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_processed" type="boolean" defaultValue="false">
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

@@ -93,4 +93,15 @@ class TouchServiceTest {
         assertEquals(touchOff.getPan(), savedTouchOffs.get(0).getPan());
     }
 
+    @Test
+    void testGetUnprocessedTouchOn_whenFound_thenReturnList(){
+        //GIVEN
+
+        //WHEN
+        List<TouchOn> touchOns = touchService.getUnprocessedTouchOn();
+
+        //THEN
+        assertEquals(1, touchOns.size());
+    }
+
 }

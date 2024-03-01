@@ -9,10 +9,10 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="start_stop" type="VARCHAR(16)">
+            <column name="from_stop" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
-            <column name="end_stop" type="VARCHAR(16)">
+            <column name="to_stop" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
             <column name="fee" type="DECIMAL(10, 2)">
@@ -22,19 +22,19 @@
     </changeSet>
     <changeSet id="insert_fee_data" author="Huy Vo">
         <insert tableName="trip_fee">
-            <column name="start_stop" value="StopA" />
-            <column name="end_stop" value="StopB" />
-            <column name="fee" value="4.50" />
+            <column name="from_stop" value="StopA"/>
+            <column name="to_stop" value="StopB"/>
+            <column name="fee" value="4.50"/>
         </insert>
         <insert tableName="trip_fee">
-            <column name="start_stop" value="StopB" />
-            <column name="end_stop" value="StopC" />
-            <column name="fee" value="6.25" />
+            <column name="from_stop" value="StopB"/>
+            <column name="to_stop" value="StopC"/>
+            <column name="fee" value="6.25"/>
         </insert>
         <insert tableName="trip_fee">
-            <column name="start_stop" value="StopA" />
-            <column name="end_stop" value="StopC" />
-            <column name="fee" value="8.45" />
+            <column name="from_stop" value="StopA"/>
+            <column name="to_stop" value="StopC"/>
+            <column name="fee" value="8.45"/>
         </insert>
     </changeSet>
 </databaseChangeLog>

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -23,5 +24,22 @@ public class TouchService {
 
     public void importTouchOff(List<TouchOff> touchOffs) {
         touchOffRepository.saveAll(touchOffs);
+    }
+
+    public TouchOn saveTouchOn(TouchOn touchOn) {
+        return touchOnRepository.save(touchOn);
+    }
+
+    public TouchOff saveTouchOff(TouchOff touchOff) {
+        return touchOffRepository.save(touchOff);
+    }
+
+    public List<TouchOn> getUnprocessedTouchOn() {
+        return touchOnRepository.findByIsProcessedIsFalse();
+    }
+
+    public Optional<TouchOff> findTouchOff(String companyId, String bustId) {
+        return touchOffRepository.findByCompanyIdAndBusIdAndIsProcessedIsFalseOrderByDatetime(companyId, bustId).stream()
+                .findFirst();
     }
 }

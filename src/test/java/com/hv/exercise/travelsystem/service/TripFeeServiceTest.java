@@ -18,7 +18,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 
-@ContextConfiguration(classes = {TriFeeService.class})
+@ContextConfiguration(classes = {TripFeeService.class})
 @ExtendWith(SpringExtension.class)
 public class TripFeeServiceTest {
 
@@ -26,7 +26,7 @@ public class TripFeeServiceTest {
     private TripFeeRepository tripFeeRepository;
 
     @Autowired
-    private TriFeeService triFeeService;
+    private TripFeeService tripFeeService;
 
     @Captor
     ArgumentCaptor<List<TripFee>> tripFeeArgumentCaptor;
@@ -35,13 +35,13 @@ public class TripFeeServiceTest {
     void testImportTripFee_whenAllGood_thenDataInsertToDB() {
         //GIVEN
         TripFee tripFee = TripFee.builder()
-                .startStop("StopA")
-                .endStop(("StopB"))
+                .fromStop("StopA")
+                .toStop(("StopB"))
                 .fee(BigDecimal.valueOf(8.6))
                 .build();
 
         //WHEN
-        triFeeService.importTripFee(Collections.singletonList(tripFee));
+        tripFeeService.importTripFee(Collections.singletonList(tripFee));
 
         //THEN
         verify(tripFeeRepository).saveAll(tripFeeArgumentCaptor.capture());
@@ -49,8 +49,8 @@ public class TripFeeServiceTest {
         List<TripFee> savedTripFees = tripFeeArgumentCaptor.getValue();
 
         assertEquals(1, savedTripFees.size());
-        assertEquals(tripFee.getStartStop(), savedTripFees.get(0).getStartStop());
-        assertEquals(tripFee.getEndStop(), savedTripFees.get(0).getEndStop());
+        assertEquals(tripFee.getFromStop(), savedTripFees.get(0).getFromStop());
+        assertEquals(tripFee.getToStop(), savedTripFees.get(0).getToStop());
         assertEquals(tripFee.getFee(), savedTripFees.get(0).getFee());
     }
 

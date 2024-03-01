@@ -31,4 +31,6 @@ public class TouchDataBased {
 
     private boolean isProcessed;
 
+    private String reason;
+
 }

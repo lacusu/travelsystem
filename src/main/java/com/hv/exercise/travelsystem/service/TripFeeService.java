@@ -11,10 +11,20 @@ import java.util.List;
 @Service
 @Slf4j
 @AllArgsConstructor
-public class TriFeeService {
+public class TripFeeService {
     private TripFeeRepository tripFeeRepository;
 
     public void importTripFee(List<TripFee> tripFees) {
         tripFeeRepository.saveAll(tripFees);
+    }
+
+    public TripFee getTripFee(String fromStop, String toStop) throws Exception {
+        return tripFeeRepository.findTripFee(fromStop, toStop)
+                .orElseThrow(Exception::new);
+    }
+
+    public TripFee getMaxTripFeeBySingleStop(String fromStop) throws Exception {
+        return tripFeeRepository.findMaxTripFeeBySingleStop(fromStop)
+                .orElseThrow(Exception::new);
     }
 }

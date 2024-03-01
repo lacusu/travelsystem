@@ -36,6 +36,7 @@ public class PreprocessDataService {
         touchService.importTouchOff(touchOffs);
     }
 
+
     private TouchOn buildTouchOn(TouchDataModel touchDataModel) {
         TouchOn touchOn = new TouchOn();
         touchOn.setStopId(touchDataModel.getStopId());

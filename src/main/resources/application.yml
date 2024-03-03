@@ -1,3 +1,4 @@
+server.port: 8081
 app:
   config:
     data-file:

@@ -50,6 +50,10 @@ The solution preprocesses each input data field for modeling and persists it int
 The architecture emphasizes decoupling the logic into multiple service classes, facilitating ease of change, development, and replacement when needed. 
 Additionally, comprehensive unit tests have been provided for major functions.
 
+
+![image](https://github.com/lacusu/travelsystem/assets/7995583/edbe9189-3810-45c3-8d9d-cb8b1ad8f131)
+
+
 ## Technologies Used
 1. **Spring Boot 3.x**: Compatible with Java 17, offering streamlined development and configuration.
 2. **Project Lombok**: Automates repetitive Java boilerplate tasks, improving code readability and conciseness.

@@ -1,12 +1,12 @@
 package com.hv.exercise.travelsystem.service;
 
 import com.hv.exercise.travelsystem.entity.TripFee;
+import com.hv.exercise.travelsystem.exception.TripFeeServiceException;
 import com.hv.exercise.travelsystem.repository.TripFeeRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @Slf4j
@@ -14,17 +14,26 @@ import java.util.List;
 public class TripFeeService {
     private TripFeeRepository tripFeeRepository;
 
-    public void importTripFee(List<TripFee> tripFees) {
-        tripFeeRepository.saveAll(tripFees);
+    public TripFee calculateTripFee(String fromStopId, String toStopId) {
+        log.info("Calculating trip fee for the trip from [{}] to [{}]", fromStopId, toStopId);
+        if (StringUtils.isNotBlank(fromStopId) && StringUtils.isNotBlank(toStopId)) {
+            return getTripFee(fromStopId, toStopId);
+        } else if (StringUtils.isNotBlank(fromStopId)) {
+            return getMaxTripFeeBySingleStop(fromStopId);
+        } else if (StringUtils.isNotBlank(toStopId)) {
+            return getMaxTripFeeBySingleStop(toStopId);
+        } else {
+            throw new TripFeeServiceException("Missing data to identify for a trip fee");
+        }
     }
 
-    public TripFee getTripFee(String fromStop, String toStop) throws Exception {
+    private TripFee getTripFee(String fromStop, String toStop) {
         return tripFeeRepository.findTripFee(fromStop, toStop)
-                .orElseThrow(Exception::new);
+                .orElseThrow(TripFeeServiceException::new);
     }
 
-    public TripFee getMaxTripFeeBySingleStop(String fromStop) throws Exception {
+    private TripFee getMaxTripFeeBySingleStop(String fromStop) {
         return tripFeeRepository.findMaxTripFeeBySingleStop(fromStop)
-                .orElseThrow(Exception::new);
+                .orElseThrow(TripFeeServiceException::new);
     }
 }

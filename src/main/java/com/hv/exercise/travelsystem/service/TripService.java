@@ -1,10 +1,11 @@
 package com.hv.exercise.travelsystem.service;
 
+import com.hv.exercise.travelsystem.constant.TouchType;
 import com.hv.exercise.travelsystem.constant.TripStatus;
-import com.hv.exercise.travelsystem.entity.TouchOff;
-import com.hv.exercise.travelsystem.entity.TouchOn;
+import com.hv.exercise.travelsystem.entity.TouchData;
 import com.hv.exercise.travelsystem.entity.TripData;
 import com.hv.exercise.travelsystem.entity.TripFee;
+import com.hv.exercise.travelsystem.model.TripSummary;
 import com.hv.exercise.travelsystem.repository.TripDataRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @Slf4j
 @AllArgsConstructor
 public class TripService {
-    private TouchService touchService;
+    private TouchDataService touchDataService;
 
     private TripFeeService tripFeeService;
 
@@ -29,136 +29,177 @@ public class TripService {
 
     private HashingService hashingService;
 
-    private FileService fileService;
-
     public List<TripData> getTripData() {
-        return tripDataRepository.findAll();
+        return tripDataRepository.findProceededTripData();
     }
 
-    public void calculateTripFee() {
-        List<TouchOn> touchOns = touchService.getUnprocessedTouchOn();
+    public void processTrip() {
+        List<TouchData> touchData = touchDataService.getUnprocessedTouchOns();
+        List<TripData> tripDataList = touchData
+                .stream()
+                .map(touchOn -> {
+                    //Initializing Trip Data by Touch On Data
+                    TripData tripData = constructTripData(touchOn, new TouchData(), BigDecimal.ZERO, TripStatus.UNPROCESSABLE);
+                    String touchOnReason = validateTouchData(touchOn);
+                    String touchOffReason = "";
+                    //Finding Touch Off Stop for further process
+                    try {
+                        Optional<TouchData> touchOffOptional =
+                                touchDataService.findTouchOff(touchOn.getCompanyId(), touchOn.getBusId(), touchOn.getDatetime());
 
-//        List<TripData> tripDataList =
-        List<TripData> tripDataList = new ArrayList<>();
-        touchOns
-                .forEach(touchOn -> {
-
-                    String reason = validateTouchOn(touchOn);
-                    if (StringUtils.isBlank(touchOn.getCompanyId()) || StringUtils.isBlank(touchOn.getBusId())) {
-                        TripData processableTripData = constructTripData(touchOn, TouchOff.builder().build(),
-                                BigDecimal.ZERO, TripStatus.UNPROCESSABLE);
-                        processableTripData.setReason(reason);
-                        tripDataList.add(processableTripData);
-                    } else {
-                        Optional<TouchOff> touchOffOptional = touchService.findTouchOff(touchOn.getCompanyId(), touchOn.getBusId());
-                        BigDecimal chargeAmount;
-                        TripStatus status;
                         if (touchOffOptional.isPresent()) {
-                            TouchOff touchOff = touchOffOptional.get();
-                            if (!touchOff.getPan().equalsIgnoreCase(touchOn.getPan())) {
-                                reason = "PAN mismatch";
+                            //Full trip CASE
+                            TouchData touchOff = touchOffOptional.get();
+                            tripData = handleFullTrip(touchOn, touchOff);
+                            if (StringUtils.isNotBlank(touchOff.getPan())
+                                    && StringUtils.isNotBlank(touchOn.getPan())
+                                    && !touchOn.getPan().equalsIgnoreCase(touchOff.getPan())) {
+                                touchOffReason = "PAN mismatched";
                             } else {
-                                reason = validateTouchOff(touchOff);
+                                touchOffReason = validateTouchData(touchOff);
                             }
-
-                            if (touchOff.getStopId().equalsIgnoreCase(touchOn.getStopId())) {
-                                //Cancelled
-                                chargeAmount = BigDecimal.ZERO;
-                                status = TripStatus.CANCELLED;
-                            } else {
-                                //Completed
-                                TripFee tripFee = null;
-                                try {
-                                    tripFee = tripFeeService.getTripFee(touchOn.getStopId(), touchOff.getStopId());
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                                chargeAmount = tripFee.getFee();
-                                status = TripStatus.COMPLETED;
-                            }
-
-                            TripData tripData = constructTripData(touchOn, touchOff, chargeAmount, status);
-
-
-                            if (StringUtils.isNotBlank(reason)) {
-                                tripData.setStatus(TripStatus.UNPROCESSABLE);
-                                tripData.setReason(reason);
-                            }
-
-                            tripDataList.add(tripData);
-
-                            touchOff.setProcessed(true);
-                            touchService.saveTouchOff(touchOff);
 
                         } else {
-                            //Incomplete
-                            status = TripStatus.INCOMPLETE;
-                            TripFee tripFee = null;
-                            try {
-                                tripFee = tripFeeService.getMaxTripFeeBySingleStop(touchOn.getStopId());
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            chargeAmount = tripFee.getFee();
-                            TouchOff incompleteTouchOff = new TouchOff();
-                            incompleteTouchOff.setStopId(touchOn.getStopId().equalsIgnoreCase(tripFee.getFromStop()) ?
-                                    tripFee.getToStop() : tripFee.getFromStop());
-                            tripDataList.add(constructTripData(touchOn, incompleteTouchOff, chargeAmount, status));
+                            //Incomplete Trip CASE
+                            tripData = handleIncompleteTrip(touchOn);
                         }
+                    } catch (Exception exception) {
+                        touchOffReason = exception.getMessage();
                     }
-                    touchOn.setProcessed(true);
-                    touchService.saveTouchOn(touchOn);
-                });
+                    //Mask the Touch On as processed
+                    setTouchDataProcessed(touchOn);
+                    return finalizeTripData(tripData, touchOnReason, touchOffReason);
+                }).toList();
+        //Persist all the trip data
         tripDataRepository.saveAll(tripDataList);
     }
 
-    public void exportUnprocessable() {
-        fileService.writeToUnprocessableTripFile(tripDataRepository.findUnprocesable());
+    public List<TripData> getUnprocesableTrip() {
+        log.info("Getting unprocessed trips");
+        List<TripData> tripDataList = tripDataRepository.findUnprocesable();
+
+        List<TripData> unprocessedTripByTouchData = touchDataService.getUnprocessedTouches().stream()
+                .map(touchData -> {
+                    TripData tripData;
+                    if (TouchType.ON.equals(touchData.getType())) {
+                        tripData = constructTripData(touchData, new TouchData(), BigDecimal.ZERO, TripStatus.UNPROCESSABLE);
+                        String reason = validateTouchData(touchData);
+                        tripData.setReason(String.format("Touch On: %s", reason));
+                    } else {
+                        tripData = constructTripData(new TouchData(), touchData, BigDecimal.ZERO, TripStatus.UNPROCESSABLE);
+                        String reason = validateTouchData(touchData);
+                        tripData.setReason(String.format("Touch Off: %s", StringUtils.isNotBlank(reason) ? reason :
+                                "Invalid data"));
+                    }
+                    return tripData;
+                }).toList();
+        tripDataList.addAll(unprocessedTripByTouchData);
+        return tripDataList;
     }
 
-    public void processSummaryData() {
-        fileService.writeToSummaryFile(tripDataRepository.getSummaryData());
+    public List<TripSummary> getSummaryTripData() {
+        log.info("Getting summary data trips");
+        return tripDataRepository.getSummaryData();
     }
 
-    private String validateTouchOn(TouchOn touchOn) {
+    private TripData finalizeTripData(TripData tripData, String touchOnReason, String touchOffReason) {
+        if (StringUtils.isNotBlank(touchOnReason)) {
+            touchOnReason = String.format("Touch On: %s", touchOnReason);
+        }
+        String reason = touchOnReason;
+        if (StringUtils.isNotBlank(touchOffReason)) {
+            touchOffReason = String.format("Touch Off: %s", touchOffReason);
+
+            if (StringUtils.isNotBlank(reason)) {
+                reason = StringUtils.joinWith(" - ", reason, touchOffReason);
+            } else {
+                reason = touchOffReason;
+            }
+        }
+        if (StringUtils.isNotBlank(reason)) {
+            tripData.setReason(reason);
+            tripData.setStatus(TripStatus.UNPROCESSABLE);
+        }
+        return tripData;
+    }
+
+    private void setTouchDataProcessed(TouchData touchData) {
+        log.info("Marking Touch [{}] Id [{}] as processed", touchData.getType(), touchData.getId());
+        touchData.setProcessed(true);
+        touchDataService.saveTouchData(touchData);
+    }
+
+    private TripData handleIncompleteTrip(TouchData touchOn) {
+        log.info("Handling incomplete trip - company id [{}] - bus id [{}] - date time [{}]",
+                touchOn.getCompanyId(), touchOn.getBusId(), touchOn.getDatetime());
+        TripFee tripFee = tripFeeService.calculateTripFee(touchOn.getStopId(), null);
+        BigDecimal chargeAmount = tripFee.getFee();
+        TouchData incompleteTouchOff = TouchData.builder().build();
+        incompleteTouchOff.setStopId(touchOn.getStopId().equalsIgnoreCase(tripFee.getFromStop()) ?
+                tripFee.getToStop() : tripFee.getFromStop());
+        return constructTripData(touchOn, incompleteTouchOff, chargeAmount, TripStatus.INCOMPLETE);
+    }
+
+    private TripData handleFullTrip(TouchData touchOn, TouchData touchOff) {
+        log.info("Handling full trip - company id [{}] - bus id [{}] - date time [{}] - from stop [{}] to stop [{}]",
+                touchOn.getCompanyId(), touchOn.getBusId(),
+                touchOn.getDatetime(), touchOn.getStopId(), touchOff.getStopId());
+
+        BigDecimal chargeAmount;
+        TripStatus status;
+
+        if (touchOff.getStopId().equalsIgnoreCase(touchOn.getStopId())) {
+            //Cancelled Case
+            chargeAmount = BigDecimal.ZERO;
+            status = TripStatus.CANCELLED;
+        } else {
+            //Completed Case
+            chargeAmount = tripFeeService.calculateTripFee(touchOn.getStopId(), touchOff.getStopId()).getFee();
+            status = TripStatus.COMPLETED;
+        }
+
+        TripData tripData = constructTripData(touchOn, touchOff, chargeAmount, status);
+        //Mask the Touch Off as processed
+        setTouchDataProcessed(touchOff);
+        return tripData;
+    }
+
+    private String validateTouchData(TouchData touchData) {
         String reason = null;
-        if (Objects.isNull(touchOn.getDatetime())) {
+        if (Objects.isNull(touchData.getDatetime())) {
             reason = "Invalid Date Time";
-        } else if (StringUtils.isBlank(touchOn.getBusId())) {
+        } else if (StringUtils.isBlank(touchData.getBusId())) {
             reason = "Invalid Bus ID";
-        } else if (StringUtils.isBlank(touchOn.getCompanyId())) {
+        } else if (StringUtils.isBlank(touchData.getCompanyId())) {
             reason = "Invalid Company ID";
-        } else if (StringUtils.isBlank(touchOn.getStopId())) {
+        } else if (StringUtils.isBlank(touchData.getStopId())) {
             reason = "Invalid Stop ID";
-        } else if (StringUtils.isBlank(touchOn.getPan())) {
-            reason = "Invalid PAN";
-        }
-//        touchOn.setReason(reason);
-        return reason;
-    }
-
-    private String validateTouchOff(TouchOff touchOff) {
-        String reason = null;
-        if (Objects.isNull(touchOff.getDatetime())) {
-            reason = "Invalid Date Time";
-        } else if (StringUtils.isBlank(touchOff.getStopId())) {
-            reason = "Invalid Stop ID";
-        } else if (StringUtils.isBlank(touchOff.getPan())) {
+        } else if (StringUtils.isBlank(touchData.getPan())) {
             reason = "Invalid PAN";
         }
         return reason;
     }
 
-    private TripData constructTripData(TouchOn touchOn, TouchOff touchOff, BigDecimal chargeAmount, TripStatus status) {
+    private TripData constructTripData(TouchData touchOn, TouchData touchOff, BigDecimal chargeAmount, TripStatus
+            status) {
+        String hashedPan = hashingService.hashSHA256(StringUtils.isNotBlank(touchOn.getPan()) ?
+                touchOn.getPan() :
+                touchOff.getPan());
+
+        String busId = StringUtils.isNotBlank(touchOn.getBusId()) ? touchOn.getBusId() : touchOff.getBusId();
+        String companyId = StringUtils.isNotBlank(touchOn.getCompanyId()) ?
+                touchOn.getCompanyId() :
+                touchOff.getCompanyId();
+
         return TripData.builder()
-                .busId(touchOn.getBusId())
-                .companyId(touchOn.getCompanyId())
+                .busId(busId)
+                .companyId(companyId)
                 .fromStop(touchOn.getStopId())
-                .toStop((touchOff.getStopId()))
                 .startDatetime(touchOn.getDatetime())
+                .hashedPan(hashedPan)
+                .toStop((touchOff.getStopId()))
                 .endDatetime(touchOff.getDatetime())
                 .chargeAmount(chargeAmount)
-                .hashedPan(hashingService.hash(touchOn.getPan()))
                 .status(status)
                 .build();
     }

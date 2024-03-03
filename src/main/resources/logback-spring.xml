@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="SPRING_APP_NAME" source="spring.application.name"/>
+    <property name="CONSOLE_LOG_PATTERN" value="%d{dd-MM-yyyy HH:mm:ss.SSS} %magenta([%thread]) %highlight(%-5level) %logger{36}.%M - %msg%n"/>
+    <property name="FILE_LOG_PATTERN" value="%d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M - %msg%n"/>
+    <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/${SPRING_APP_NAME}.log}"/>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <logger name="org.springframework.web.filter.CommonsRequestLoggingFilter">
+        <level value="INFO" />
+    </logger>
+</configuration>

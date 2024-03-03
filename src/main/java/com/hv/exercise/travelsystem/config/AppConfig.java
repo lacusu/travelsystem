@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-
 @Configuration
 @ConfigurationProperties(prefix = "app.config")
 @Getter
@@ -21,16 +19,27 @@ public class AppConfig {
     @NoArgsConstructor
     public static class DataFile {
 
-        private TouchDataFile touchDataFile;
-
+        private Input input;
+        private Output output;
+        private String datetimeFormat;
     }
 
     @Getter
     @Setter
     @NoArgsConstructor
-    public static class TouchDataFile {
+    public static class Input {
 
-        private List<String> headers;
+        private String touchFilePath;
+    }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Output {
+
+        private String parentPath;
+        private String tripsFileName;
+        private String summaryFileName;
+        private String unprocessableFileName;
     }
 }

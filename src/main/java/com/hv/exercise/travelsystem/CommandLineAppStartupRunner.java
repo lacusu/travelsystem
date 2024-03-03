@@ -1,7 +1,6 @@
 package com.hv.exercise.travelsystem;
 
 import com.hv.exercise.travelsystem.service.FileService;
-import com.hv.exercise.travelsystem.service.PreprocessDataService;
 import com.hv.exercise.travelsystem.service.TripService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +10,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class CommandLineAppStartupRunner implements CommandLineRunner {
-    @Autowired
-    PreprocessDataService preprocessDataService;
 
     @Autowired
     TripService tripService;
@@ -22,10 +19,16 @@ public class CommandLineAppStartupRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        preprocessDataService.importTouchData();
-        tripService.calculateTripFee();
-        fileService.writeToTripFile(tripService.getTripData());
-        tripService.processSummaryData();
-        tripService.exportUnprocessable();
+        log.info("====================> Phase 1. Modeling data and import to database...");
+        fileService.importTouchData();
+
+        log.info("====================> Phase 2. Processing data...");
+        tripService.processTrip();
+
+        log.info("====================> Phase 3. Exporting data to file...");
+        fileService.writeToTripFile();
+        fileService.writeToUnprocessableTripFile();
+        fileService.writeToSummaryFile();
+        log.info("<==================== DONE!");
     }
 }

@@ -5,19 +5,17 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="Huy Vo" id="changelog-2.0">
-        <createTable tableName="trip_data">
+        <createTable tableName="touch_data">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="start_datetime" type="DATETIME">
+            <column name="datetime" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="end_datetime" type="DATETIME">
-            </column>
-            <column name="from_stop" type="VARCHAR(16)">
+            <column name="type" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
-            <column name="to_stop" type="VARCHAR(16)">
+            <column name="stop_id" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
             <column name="company_id" type="VARCHAR(16)">
@@ -26,16 +24,11 @@
             <column name="bus_id" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
-            <column name="hashed_pan" type="VARCHAR(64)">
+            <column name="pan" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR(16)">
-                <constraints nullable="false"/>
+            <column name="is_processed" type="boolean" defaultValue="false">
             </column>
-            <column name="charge_amount" type="DECIMAL(10, 2)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="reason" type="text"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>

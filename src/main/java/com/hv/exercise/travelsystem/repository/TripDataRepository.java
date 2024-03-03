@@ -30,4 +30,7 @@ public interface TripDataRepository extends JpaRepository<TripData, Long> {
 
     @Query(value = "SELECT t FROM TripData t WHERE t.status ='UNPROCESSABLE'")
     List<TripData> findUnprocesable();
+
+    @Query(value = "SELECT t FROM TripData t WHERE t.status !='UNPROCESSABLE'")
+    List<TripData> findProceededTripData();
 }

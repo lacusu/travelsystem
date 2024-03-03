@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/resources/datafiles/output/
+/src/test/resources/file-service/out/

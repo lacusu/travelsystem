@@ -1,15 +1,15 @@
-#app:
-#  config:
-#    data-file:
-#      touch-data-file:
-#        headers:
-#          - ID
-#          - DateTimeUTC
-#          - TouchType
-#          - StopID
-#          - CompanyID
-#          - BusID
-#          - PAN
+app:
+  config:
+    data-file:
+      datetime-format: 'dd-MM-yyyy HH:mm:ss'
+      input:
+        touch-file-path: src/main/resources/datafiles/input/touchData.csv
+      output:
+        parent-path: src/main/resources/datafiles/output/
+        trips-file-name: trips.csv
+        summary-file-name: tripSummary.csv
+        unprocessable-file-name: unprocessableTouchData.csv
+
 spring:
   profiles:
     active: ${SPRING_PROFILE_ACTIVE:local}

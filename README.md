@@ -16,7 +16,26 @@
 
 ## How to Test
 - An example input file, `touchData.csv`, is provided at `src/main/resources/datafiles/input/touchData.csv`. Modify this file to test additional cases if needed.
+
+  **touchData.csv**
+
+  ![image](https://github.com/lacusu/travelsystem/assets/7995583/325e9ad5-b19f-4023-bc00-1c1ff08250e3)
+
 - Output files will be generated in `src/main/resources/datafiles/out/`.
+
+  **trips.csv**
+
+  ![image](https://github.com/lacusu/travelsystem/assets/7995583/dc2e3fbc-c30f-42d3-a407-66fc013f5674)
+
+  **tripSummary.csv**
+
+  ![image](https://github.com/lacusu/travelsystem/assets/7995583/a3914470-6af6-4eb3-bcfb-75288c12b051)
+
+  **unprocessableTouchData.csv**
+
+  ![image](https://github.com/lacusu/travelsystem/assets/7995583/300b479f-5d48-45b4-8da6-3c30d3ff2c77)
+
+
 - Follow these steps:
 1. Modify the input file: `src/main/resources/datafiles/input/touchData.csv`.
 2. Run the application:
